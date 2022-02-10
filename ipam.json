@@ -1,0 +1,59 @@
+{
+    "customer-peering-addresses": [
+        {
+            "net": "172.16.10.0",
+            "mask": "30",
+            "customer": "contoso"
+        },
+        {
+            "net": "172.16.10.4",
+            "mask": "30",
+            "customer": "contoso"
+        },
+        {
+            "net": "172.16.10.8",
+            "mask": "30",
+            "customer": "craignet"
+        },
+        {
+            "net": "172.16.10.12",
+            "mask": "30",
+            "customer": "craignet"
+        },
+        {
+            "net": "172.16.10.16",
+            "mask": "30",
+            "customer": false
+        },
+        {
+            "net": "172.16.10.20",
+            "mask": "30",
+            "customer": false
+        },
+        {
+            "net": "172.16.10.24",
+            "mask": "30",
+            "customer": false
+        },
+        {
+            "net": "172.16.10.28",
+            "mask": "30",
+            "customer": false
+        },
+        {
+            "net": "172.16.10.32",
+            "mask": "30",
+            "customer": false
+        },
+        {
+            "net": "172.16.10.36",
+            "mask": "30",
+            "customer": false
+        },
+        {
+            "net": "172.16.10.40",
+            "mask": "30",
+            "customer": false
+        }
+    ]
+}
