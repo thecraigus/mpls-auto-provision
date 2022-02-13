@@ -48,17 +48,17 @@
         {
             "net": "172.16.10.36",
             "mask": "30",
-            "customer": false
+            "customer": "burgerking"
         },
         {
             "net": "172.16.10.40",
             "mask": "30",
-            "customer": false
+            "customer": "burgerking"
         },
         {
             "net": "172.16.10.44",
             "mask": "30",
-            "customer": false
+            "customer": "burgerking"
         }
     ]
 }

@@ -31,16 +31,15 @@ class MplsPe():
         self.MgmtIp = MgmtIp
         self.UserName = UserName
         self.Password = Password
+        self.headers = {'Accept': 'application/yang-data+json',
+                        'Content-Type': 'application/yang-data+json'}
 
     def GetConfig(self):
-        headers = {'Accept': 'application/yang-data+json'}
         result = requests.get(url=f"https://{self.MgmtIp}/restconf/data/Cisco-IOS-XE-native:native/", auth=(
-            self.UserName, self.Password), verify=False, headers=headers).text
+            self.UserName, self.Password), verify=False, headers=self.headers).text
         return result
 
     async def CreateVRF(self):
-        headers = {'Accept': 'application/yang-data+json',
-                   'content-type': 'application/yang-data+json'}
         payload = {
             "Cisco-IOS-XE-native:vrf": [
                 {
@@ -59,8 +58,9 @@ class MplsPe():
                 }
             ]
         }
-        async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False, limit_per_host=10), headers=headers) as session:
-            async with session.patch(url=f"https://{self.MgmtIp}/restconf/data/Cisco-IOS-XE-native:native/ip/vrf", auth=aiohttp.BasicAuth(self.UserName, self.Password), data=json.dumps(payload)) as response:
+        async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False, limit_per_host=10), headers=self.headers) as session:
+            async with session.patch(url=f"https://{self.MgmtIp}/restconf/data/Cisco-IOS-XE-native:native/ip/vrf",
+                                     auth=aiohttp.BasicAuth(self.UserName, self.Password), data=json.dumps(payload)) as response:
                 resp = await response.text()
                 print('Actioning {}:        Creating VRF for {}'.format(
                     self.HostName, CustomerName))
@@ -69,8 +69,6 @@ class MplsPe():
         return resp
 
     async def UpdateMpBGP(self):
-        headers = {'Accept': 'application/yang-data+json',
-                   'content-type': 'application/yang-data+json'}
         payload = {
             "Cisco-IOS-XE-bgp:vrf": [
                 {
@@ -84,7 +82,7 @@ class MplsPe():
                 }
             ]
         }
-        async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False, limit_per_host=10), headers=headers) as session:
+        async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False, limit_per_host=10), headers=self.headers) as session:
             async with session.patch(url=f"https://{self.MgmtIp}/restconf/data/Cisco-IOS-XE-native:native/router/Cisco-IOS-XE-bgp:bgp=65010/address-family/with-vrf/ipv4=unicast/vrf", auth=aiohttp.BasicAuth(self.UserName, self.Password), data=json.dumps(payload)) as response:
                 resp = await response.text()
                 print('Actioning {}:        Creating IPv4 ADF for {}'.format(
@@ -114,15 +112,15 @@ class MplsPe():
         f.close()
         ###################################################
 
+        ##################################################
+        # Refactor? / Get Service Interface IP and Mask
+        ###################################################
         ip_addr = str(x['net'])+'/'+str(x['mask'])
         assignablehosts = ipaddress.IPv4Network(ip_addr).hosts()
         addrlist = list(assignablehosts)
-
-        headers = {'Accept': 'application/yang-data+json',
-                   'content-type': 'application/yang-data+json'}
-
         netstring = ipaddress.IPv4Network(
             str(x['net']+'/'+str(x['mask']))).with_netmask
+        ###################################################
         payload = {
             "Cisco-IOS-XE-native:interface": {
                 "GigabitEthernet": [
@@ -150,9 +148,7 @@ class MplsPe():
                 ]
             }}
 
-        # print(payload)
-
-        async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False, limit_per_host=10), headers=headers) as session:
+        async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False, limit_per_host=10), headers=self.headers) as session:
             async with session.patch(url=f"https://{self.MgmtIp}/restconf/data/Cisco-IOS-XE-native:native/interface", auth=aiohttp.BasicAuth(self.UserName, self.Password), data=json.dumps(payload)) as response:
                 resp = await response.text()
 
@@ -164,34 +160,29 @@ class MplsPe():
 
 
 async def main():
-    r1 = MplsPe('pe1', '192.168.137.200', 'craig', 'Telecaster1!')
-    r2 = MplsPe('pe2', '192.168.137.201', 'craig', 'Telecaster1!')
-    r3 = MplsPe('pe3', '192.168.137.202', 'craig', 'Telecaster1!')
+    r1 = MplsPe('pe1', '192.168.137.200', 'craig', 'pa55w0rd1!')
+    r2 = MplsPe('pe2', '192.168.137.201', 'craig', 'pa55w0rd1!')
+    r3 = MplsPe('pe3', '192.168.137.202', 'craig', 'pa55w0rd1!')
     edges = [r1, r2, r3]
 
     for x in edges:
         vrfTask = asyncio.create_task(x.CreateVRF())
 
     await asyncio.gather(vrfTask)
-    # sleep(1)
+
     await asyncio.sleep(1)
+
     for x in edges:
         bgptask = asyncio.create_task(x.UpdateMpBGP())
 
     await asyncio.gather(bgptask)
-    # sleep(3)
+
     await asyncio.sleep(3)
+
     for x in edges:
         provision = asyncio.create_task(x.ProvisionServiceInterface())
 
     await asyncio.gather(provision)
-
-    # sleep(4)
-
-    # for x in edges:
-    #     provision = asyncio.create_task(x.ProvisionServiceInterface())
-
-    # await asyncio.gather(bgptask, provision)
 
 
 if __name__ == '__main__':
